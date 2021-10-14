@@ -20,7 +20,7 @@ contract Election {
     
     // events
     event Vote(address voter, address voted);
-    event Prize(uint256 prize, uint256 totalBalance);
+    event Winner(address[] winner);
     
     modifier onlyAdmin() {
         require(msg.sender == owner, "Only admin");
@@ -66,13 +66,11 @@ contract Election {
         require(winners.length > 0, "No winner found!");
         uint256 prize = address(this).balance / winners.length;
         
-        emit Prize(prize,address(this).balance);
-        
         for (uint i=0; i<winners.length; i++){
             payable(winners[i]).transfer(prize);
         }
+        emit Winner(winners);
         reset();
-        
     }
     
     // Reset the election
