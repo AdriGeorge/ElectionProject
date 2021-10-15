@@ -16,12 +16,28 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 ## Start from 0
 
+`
 npx create-react-app my-app  
+`
+<br/>
+`
 truffle init
-modify truffle config (network and solidity version at 0.8.0)
-create smart contract
-create 2 deploy contract
+`
+<br/>
+modify truffle config (network and solidity version at 0.8.0),
+create smart contract,
+create 2 deploy contract,
+<br/>
+`
 truffle compile
+`
+<br/>
+`
 truffle migrate --network ganache
+`
+<br/>
 move json of smart contract inside a new folder 'utils'
+<br/>
+`
 npm install web3
+`
