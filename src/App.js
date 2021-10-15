@@ -7,6 +7,7 @@ function App() {
   const [account, setAccount] = useState(null);
   const [contract, setContract] = useState(null);
   const [candidates, setCandidates] = useState(null);
+  const [votes, setVotes] = useState(null);
   const [winner, setWinner] = useState(null);
 
   useEffect(async () => {
@@ -14,7 +15,7 @@ function App() {
     var accounts = await web3Conf.eth.getAccounts();
     var contractConf = new web3Conf.eth.Contract(
       Election.abi,
-      '0x4FfE37367d34Ad64EacbA85CDE8e746054840846'
+      '0x159b5FA1168f69F9E3a1d955d94A2DBE22Ef75aF'
     );
 
     setContract(contractConf);
@@ -24,25 +25,28 @@ function App() {
     try {
       var candidatesArray = [];
       var candidatesNumber = await contractConf.methods
-        .getCandidatesNumber()
+        .getSizeCandidate()
         .call();
       for (var i = 0; i < candidatesNumber; i++) {
         var candidate = await contractConf.methods.candidateList(i).call();
-        console.log('candidates: ', candidate);
+        //console.log('candidates: ', candidate);
         candidatesArray.push(candidate);
       }
-      console.log('candidatesArray: ', candidatesArray);
+      //console.log('candidatesArray: ', candidatesArray);
+      setCandidates(candidatesArray);
 
-      var candidatesObject = [];
+      var votesArray = [];
       for (let i = 0; i < candidatesArray.length; i++) {
-        console.log('address : ', candidatesArray[i]);
+        //console.log('address : ', candidatesArray[i]);
         var vote = await contractConf.methods
           .votesReceived(candidatesArray[i])
           .call();
-        candidatesObject[i] = { address: candidatesArray[i], vote: vote };
+        votesArray.push(vote);
       }
-      console.log('candidateObject: ', candidatesObject);
-      setCandidates(candidatesObject);
+      //
+
+      //console.log('votes: ', votesArray);
+      setVotes(votesArray);
     } catch (error) {
       console.log(error);
     }
@@ -54,42 +58,85 @@ function App() {
       var tx = await contract.methods
         .voteForCandidate(candidateToVote)
         .send({ from: account, value: web3.utils.toWei('1', 'ether') });
-      console.log('tx: ', tx);
-      // var vote = await getVote(candidateToVote);
+      //console.log('tx: ', tx);
+      updateVotes();
     } catch (error) {
       console.log(error);
     }
   }
 
-  async function reward() {
-    var tx = await contract.methods.reward().call();
-    var winner = tx.events.Winner.returnValues.winner;
-    setWinner(winner);
+  async function updateVotes() {
+    try {
+      var votesArray = [];
+      for (let i = 0; i < candidates.length; i++) {
+        var vote = await contract.methods.votesReceived(candidates[i]).call();
+        votesArray.push(vote);
+      }
+      setVotes(votesArray);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function reset(e) {
+    e.preventDefault();
+    var tx = await contract.methods
+      .reset()
+      .send({ from: account, gasLimit: 21000000 });
+    updateVotes();
+    setWinner(null);
+    //console.log('tx: ', tx);
+  }
+
+  async function reward(e) {
+    e.preventDefault();
+    try {
+      var maxVotes = await contract.methods.maxVotes().call();
+      //console.log('maxVotes', maxVotes);
+      var totalVotes = await contract.methods.totalVotes().call();
+      //console.log('totaleVotes: ', totalVotes);
+      var tx = await contract.methods
+        .reward()
+        .send({ from: account, gasLimit: 21000000 });
+
+      var winnersSize = await contract.methods.getSizeWinners().call();
+      //console.log('size: ', winnersSize);
+      var winnersArray = [];
+      for (let i = 0; i < winnersSize; i++) {
+        var win = await contract.methods.winners(i).call();
+        winnersArray.push(win);
+      }
+
+      //console.log(winnersArray);
+      if (winnersArray.length > 0) setWinner(winnersArray);
+      //console.log('tx: ', tx);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async function modifyParams(newCandidates, maxVotes) {
     var tx = await contract.methods
       .modifyParams(newCandidates, maxVotes)
       .send({ from: account });
-    console.log('tx: ', tx);
+    //console.log('tx: ', tx);
   }
 
   return (
     <div className='App'>
       <p>Your account: {account}</p>
-      {console.log('qua: ', candidates)}
       {candidates != null &&
-        candidates.map((candidateAccount, i) => {
+        votes != null &&
+        candidates.map((address, i) => {
           return (
             <div style={{ display: 'flex' }} key={i}>
-              {console.log(candidateAccount.address, candidateAccount.vote)}
               <li style={{ marginRight: '10px' }}>
-                candidato numero {i}: {candidateAccount.address}
+                candidato numero {i + 1}: {address}
               </li>
-              Voti ricevuti: {candidateAccount.vote}
+              Voti ricevuti: {votes[i]}
               <button
                 style={{ marginLeft: '10px' }}
-                onClick={e => voteForCandidate(e, candidateAccount.address)}
+                onClick={e => voteForCandidate(e, address)}
               >
                 Vota
               </button>
@@ -99,14 +146,21 @@ function App() {
 
       <b />
 
-      {/* {winner != null &&
+      <div>
+        <button onClick={e => reward(e)}>Dai la ricompensa</button>
+        <button onClick={e => reset(e)}>Reset</button>
+      </div>
+
+      <b />
+
+      {winner != null &&
         winner.map(function (accountWinner, i) {
           return (
             <li key={i}>
-              vincitore numero {i}: {accountWinner}
+              vincitore numero {i + 1}: {accountWinner}
             </li>
           );
-        })} */}
+        })}
     </div>
   );
 }

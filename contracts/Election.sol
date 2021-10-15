@@ -6,7 +6,7 @@ contract Election {
     
     address private owner;
     uint256 public maxVotes;
-    uint256 public totalVotes = 0;
+    uint256 public totalVotes;
     
     /* mapping field below is equivalent to an associative array or hash.
     The key of the mapping is candidate name stored as type bytes32 and value is
@@ -15,12 +15,11 @@ contract Election {
     mapping (address => uint256) public votesReceived;
       
     address payable[] public candidateList;
-    address payable[] private winners;
+    address payable[] public winners;
     address[] private voterList;
     
     // events
     event Vote(address voter, address voted);
-    event Winner(address[] winner);
     
     modifier onlyAdmin() {
         require(msg.sender == owner, "Only admin");
@@ -37,6 +36,7 @@ contract Election {
         owner = msg.sender;
         candidateList = candidateNames;
         maxVotes = _maxVotes;
+        totalVotes = 0;
     }
     
     
@@ -69,14 +69,17 @@ contract Election {
         for (uint i=0; i<winners.length; i++){
             payable(winners[i]).transfer(prize);
         }
-        emit Winner(winners);
-        reset();
     }
     
     // Reset the election
-    function reset() private {
+    function reset() public {
+        for(uint i=0; i<candidateList.length; i++){
+            votesReceived[candidateList[i]] = 0;
+        }
         delete totalVotes;
+        delete voterList;
         delete winners;
+
     }
     
     // Modify the list of candidates and the required votes to end the election
@@ -117,7 +120,11 @@ contract Election {
         return false;
     }
 
-    function getCandidatesNumber() public view returns(uint256){
+    function getSizeCandidate() public view returns (uint256) {
         return candidateList.length;
+    }
+
+     function getSizeWinners() public view returns (uint256) {
+        return winners.length;
     }
 }

@@ -12,8 +12,16 @@ Install all dependencies that project require.
 
 ### `npm start`
 
-Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Start from 0
+
+npx create-react-app my-app  
+truffle init
+modify truffle config (network and solidity version at 0.8.0)
+create smart contract
+create 2 deploy contract
+truffle compile
+truffle migrate --network ganache
+move json of smart contract inside a new folder 'utils'
+npm install web3
