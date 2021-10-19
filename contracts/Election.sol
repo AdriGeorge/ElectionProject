@@ -14,7 +14,7 @@ contract Election {
     */
     mapping (address => uint256) public votesReceived;
       
-    address payable[] public candidateList;
+    address[] public candidateList;
     address payable[] public winners;
     address[] private voterList;
     
@@ -32,7 +32,7 @@ contract Election {
     we will pass an array of candidates who will be contesting in the election.
     We also pass a paramether that indicate the max number of votes allowed
     */
-    constructor(address payable[] memory candidateNames, uint256 _maxVotes) {
+    constructor(address[] memory candidateNames, uint256 _maxVotes) {
         owner = msg.sender;
         candidateList = candidateNames;
         maxVotes = _maxVotes;
@@ -46,7 +46,7 @@ contract Election {
         require(totalVotes < maxVotes, "Election closed, wait for the new round");
         require(msg.value >= 1 ether, "You have to send at least 1 ether to vote");
         require(validCandidate(candidate), "Candidate not valid");
-        require(validVoter(msg.sender), "Address of voter not valid or already voted");
+        //require(validVoter(msg.sender), "Address of voter not valid or already voted");
         votesReceived[candidate] += 1;
         voterList.push(msg.sender);
         totalVotes += 1;
@@ -59,7 +59,7 @@ contract Election {
         uint256 voteToWin = findVoteToWin();
         for(uint256 i=0; i<candidateList.length; i++){
             if(votesReceived[candidateList[i]] == voteToWin){
-                winners.push(candidateList[i]);
+                winners.push(payable (candidateList[i]));
             }
         }
         
